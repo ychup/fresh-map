@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>鲜采地图 - 周边果蔬价格指南</title>
+    <!-- 使用 Google Fonts 提升质感 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- 网站图标（浏览器标签页图标） -->
+    <link rel="icon" type="image/png" href="OIP.png">
+    <!-- Font Awesome 6 (图标库) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f7f9f2;
+            color: #1f2a1b;
+            line-height: 1.4;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 头部与定位 */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #cde2c0;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #2b6e2f, #5f9e4e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo h1 img {
+            height: 1.8rem;
+            width: auto;
+            vertical-align: middle;
+        }
+
+        .logo p {
+            font-size: 0.8rem;
+            color: #5a6e4a;
+        }
+
+        .location-bar {
+            background: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            border: 1px solid #deecd0;
+        }
+
+        .location-bar i {
+            color: #3b7a34;
+            font-size: 1.2rem;
+        }
+
+        #userLocation {
+            font-weight: 500;
+            background: #f0f7ea;
+            padding: 0.2rem 0.6rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+        }
+
+        .btn-locate {
+            background: none;
+            border: none;
+            color: #3b7a34;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            transition: all 0.2s;
+        }
+
+        .btn-locate:hover {
+            background: #e3f3db;
+        }
+
+        /* 右侧控制区（打赏按钮 + 语言切换器 + 定位栏）*/
+        .right-controls {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* 打赏按钮样式 */
+        .reward-btn {
+            background: linear-gradient(135deg, #ffd966, #ffb347);
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #5a3e1b;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            font-family: 'Inter', sans-serif;
+        }
+        .reward-btn i {
+            font-size: 1rem;
+            color: #e67e22;
+        }
+        .reward-btn:hover {
+            transform: scale(1.02);
+            background: linear-gradient(135deg, #ffcc66, #ffa333);
+            box-shadow: 0 4px 12px rgba(255,180,70,0.3);
+        }
+
+        /* 模态框遮罩层 (全屏弹窗) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.2s ease;
+            cursor: pointer;
+        }
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            background: transparent;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .modal-content img {
+            width: auto;
+            height: auto;
+            max-width: 85vw;
+            max-height: 85vh;
+            display: block;
+            border-radius: 24px;
+            object-fit: contain;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        /* 响应式调整 */
+        @media (max-width: 700px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .right-controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .tabs {
+                justify-content: center;
+            }
+        }
+        .lang-switcher {
+            display: flex;
+            gap: 0.5rem;
+            background: white;
+            padding: 0.2rem;
+            border-radius: 40px;
+            border: 1px solid #deecd0;
+        }
+        .lang-btn {
+            background: transparent;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #5a6e4a;
+        }
+        .lang-btn.active {
+            background: #2b6e2f;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .lang-btn:hover:not(.active) {
+            background: #e3f3db;
+        }
+        .controls {
+            background: white;
+            border-radius: 28px;
+            padding: 0.8rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            border: 1px solid #e2f0da;
+        }
+        /* 搜索框样式 */
+        .search-wrapper {
+            display: flex;
+            align-items: center;
+            background: #f9fcf7;
+            border-radius: 40px;
+            padding: 0.2rem 0.8rem;
+            border: 1px solid #cde0c0;
+            transition: all 0.2s;
+        }
+        .search-wrapper i {
+            color: #8aa07a;
+            font-size: 0.9rem;
+        }
+        #productSearch {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 0.6rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            width: 160px;
+            outline: none;
+        }
+        #productSearch:focus {
+            outline: none;
+        }
+        .search-clear {
+            background: none;
+            border: none;
+            color: #b9cfaa;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0 0.2rem;
+            display: none;
+        }
+        .search-clear:hover {
+            color: #d9534f;
+        }
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0;
+        }
+        .product-tag {
+            background: #eef3e8;
+            border: none;
+            padding: 0.25rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #47633b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .product-tag:hover, .product-tag.active-tag {
+            background: #2b6e2f;
+            color: white;
+        }
+        .active-filter-badge {
+            background: #eaf7e2;
+            border-radius: 20px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.7rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .clear-filter-btn {
+            background: none;
+            border: none;
+            color: #d9534f;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.7rem;
+        }
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: #eff3ea;
+            padding: 0.25rem;
+            border-radius: 48px;
+        }
+        .tab-btn {
+            border: none;
+            background: transparent;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            color: #3e5a34;
+        }
+        .tab-btn.active {
+            background: white;
+            color: #2b6e2f;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .sort-group {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: #f9fcf7;
+            padding: 0.2rem 0.8rem;
+            border-radius: 32px;
+        }
+        .sort-group label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #47633b;
+        }
+        #sortSelect {
+            border: none;
+            background: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 30px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            cursor: pointer;
+            border: 1px solid #cde0c0;
+        }
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.6rem;
+            margin-top: 0.5rem;
+        }
+        .shop-card {
+            background: white;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+            transition: all 0.25s ease;
+            border: 1px solid #e5f0dd;
+        }
+        .shop-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 28px rgba(85, 107, 47, 0.08);
+            border-color: #cbe5bc;
+        }
+        .card-header {
+            padding: 1rem 1.2rem 0.5rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px dashed #eef3e8;
+        }
+        .shop-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .shop-name i {
+            color: #6f9e5c;
+            font-size: 1rem;
+        }
+        .distance {
+            font-size: 0.7rem;
+            background: #eaf7e2;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            color: #3a6b2f;
+            font-weight: 500;
+        }
+        .price-section {
+            padding: 1rem 1.2rem;
+        }
+        .category-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            color: #748a63;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-left: 3px solid #8fc27e;
+            padding-left: 10px;
+        }
+        .price-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .price-badge {
+            flex: 1;
+            min-width: 80px;
+            background: #fdfdf5;
+            border-radius: 24px;
+            padding: 0.5rem 0.6rem;
+            text-align: center;
+            border: 1px solid #eef1e4;
+            position: relative;
+        }
+        .item-name {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #7c8f6b;
+            letter-spacing: 0.3px;
+        }
+        .price-value {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #2b4823;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .price-unit {
+            font-size: 0.65rem;
+            font-weight: normal;
+            color: #8aa07a;
+        }
+        .trend-icon {
+            font-size: 0.8rem;
+            margin-left: 4px;
+        }
+        .high-price { color: #d9534f; }
+        .low-price { color: #5cb85c; }
+        .medium-price { color: #f0ad4e; }
+        .best-price-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #5a3e1b;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 0.15rem 0.4rem;
+            border-radius: 20px;
+            margin-left: 6px;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .footer-note {
+            text-align: center;
+            margin-top: 3rem;
+            font-size: 0.75rem;
+            color: #93a981;
+            border-top: 1px solid #ddecd0;
+            padding-top: 1.5rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 2rem;
+            color: #89a179;
+        }
+        .filter-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="logo">
+            <h1>
+                <img src="OIP.png" alt="Logo" style="height: 1.8rem; width: auto;" onerror="this.style.display='none'">
+                <span data-i18n="app_name">鲜采地图</span>
+            </h1>
+            <p data-i18n="subtitle">周边果蔬 · 价比三家</p>
+        </div>
+        <div class="right-controls">
+            <button class="reward-btn" id="rewardBtn">
+                <i class="fas fa-heart"></i> <span data-i18n="reward_btn">打赏</span>
+            </button>
+            <div class="lang-switcher">
+                <button class="lang-btn" data-lang="zh">中文</button>
+                <button class="lang-btn" data-lang="en">EN</button>
+                <button class="lang-btn" data-lang="ko">한국어</button>
+            </div>
+            <div class="location-bar">
+                <i class="fas fa-map-marker-alt"></i>
+                <span id="userLocation" data-i18n="location_not">未定位</span>
+                <button class="btn-locate" id="locateBtn"><i class="fas fa-location-dot"></i> <span data-i18n="locate_me">定位我</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="tabs">
+            <button class="tab-btn active" data-type="all" data-i18n="tab_all">🍎 全部店铺</button>
+            <button class="tab-btn" data-type="fruit" data-i18n="tab_fruit">🍓 水果为主</button>
+            <button class="tab-btn" data-type="vegetable" data-i18n="tab_veg">🥬 蔬菜为主</button>
+        </div>
+        <div class="sort-group">
+            <label><i class="fas fa-arrow-down-wide-short"></i> <span data-i18n="sort_label">排序方式</span></label>
+            <select id="sortSelect">
+                <option value="distance" data-i18n="sort_distance">📍 距离最近</option>
+                <option value="price_asc_fruit" data-i18n="sort_fruit_asc">🍎 水果均价 低→高</option>
+                <option value="price_desc_fruit" data-i18n="sort_fruit_desc">🍎 水果均价 高→低</option>
+                <option value="price_asc_veg" data-i18n="sort_veg_asc">🥬 蔬菜均价 低→高</option>
+                <option value="price_desc_veg" data-i18n="sort_veg_desc">🥬 蔬菜均价 高→低</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 商品搜索与标签区域 -->
+    <div style="background: white; border-radius: 28px; padding: 0.8rem 1.2rem; margin-bottom: 1.5rem; border: 1px solid #e2f0da;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; justify-content: space-between;">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="productSearch" placeholder="搜索商品..." data-i18n="search_placeholder" autocomplete="off">
+                <button id="clearSearchBtn" class="search-clear"><i class="fas fa-times-circle"></i></button>
+            </div>
+            <div>
+                <span data-i18n="hot_tags" style="font-size:0.7rem; color:#748a63; margin-right: 8px;">🔥 热门商品:</span>
+                <div class="tag-cloud" id="tagCloud"></div>
+            </div>
+        </div>
+        <div id="activeFilterInfo" class="filter-info" style="margin-top: 10px;"></div>
+    </div>
+
+    <div id="shopContainer" class="shop-grid">
+        <div class="empty-state" data-i18n="loading">📍 正在加载店铺数据，或点击“定位我”查看周边距离</div>
+    </div>
+    <div class="footer-note">
+        <i class="fas fa-chart-line"></i> <span data-i18n="footer_text">价格参考周边实时行情 | 颜色标识: ●偏低 ●中等 ●偏高 | 🏆 表示该商品在附近最低价</span>
+    </div>
+</div>
+
+<div id="rewardModal" class="modal-overlay">
+    <div class="modal-content">
+        <img id="rewardImage" src="" alt="打赏二维码">
+    </div>
+</div>
+
+<script>
+    // ---------- 多语言词库 + 汇率与单位映射 + 店铺名称多语种 ----------
+    const exchangeRates = { zh: 1, en: 0.14, ko: 185.0 };
+    const currencySymbols = { zh: "¥", en: "$", ko: "₩" };
+    const unitMapping = { zh: { jin: "斤", box: "盒" }, en: { jin: "lb", box: "box" }, ko: { jin: "근", box: "박스" } };
+    function formatPrice(priceCNY, lang) {
+        let converted = priceCNY * exchangeRates[lang];
+        if (lang === 'ko') return Math.round(converted).toLocaleString();
+        return converted.toFixed(1);
+    }
+
+    const storeNames = {
+        1: { zh: "绿园鲜果坊", en: "Green Garden Fruits", ko: "푸른 정원 과일가게" },
+        2: { zh: "老张果蔬平价超市", en: "Lao Zhang's Produce Mart", ko: "라오장 과일채소 마트" },
+        3: { zh: "有机农夫市集", en: "Organic Farmers' Market", ko: "유기농 농부 시장" },
+        4: { zh: "鲜果皇后", en: "Fruit Queen", ko: "과일 여왕" },
+        5: { zh: "晨露蔬菜直营店", en: "Morning Dew Veggies", ko: "아침 이슬 채소 직영점" },
+        6: { zh: "百果园社区店", en: "Hundred Fruits Garden", ko: "백과원 커뮤니티 스토어" }
+    };
+
+    const translations = {
+        zh: { app_name: "鲜采地图", subtitle: "周边果蔬 · 价比三家", location_not: "未定位", locate_me: "定位我", tab_all: "🍎 全部店铺", tab_fruit: "🍓 水果为主", tab_veg: "🥬 蔬菜为主", sort_label: "排序方式", sort_distance: "📍 距离最近", sort_fruit_asc: "🍎 水果均价 低→高", sort_fruit_desc: "🍎 水果均价 高→低", sort_veg_asc: "🥬 蔬菜均价 低→高", sort_veg_desc: "🥬 蔬菜均价 高→低", loading: "📍 正在加载店铺数据，或点击“定位我”查看周边距离", footer_text: "价格参考周边实时行情 | 颜色标识: ●偏低 ●中等 ●偏高", fruit_title: "鲜果价格", veg_title: "时蔬价格", no_fruit: "暂无水果售卖", no_veg: "暂无蔬菜售卖", avg_fruit: "水果均价", avg_veg: "蔬菜均价", no_fruit_data: "无水果", no_veg_data: "无蔬菜", distance_km: "km", empty_shop: "没有找到符合条件的店铺，试试切换分类~", reward_btn: "打赏", search_placeholder: "搜索商品...", hot_tags: "🔥 热门商品:", filter_active: "当前筛选商品: ", clear_filter: "清除筛选", sort_price_low: "💰 价格从低到高" },
+        en: { app_name: "FreshMap", subtitle: "Nearby Produce · Price Compare", location_not: "Not located", locate_me: "Locate me", tab_all: "🍎 All Stores", tab_fruit: "🍓 Fruit Focus", tab_veg: "🥬 Veg Focus", sort_label: "Sort by", sort_distance: "📍 Distance (Nearest)", sort_fruit_asc: "🍎 Fruit Avg Price Low→High", sort_fruit_desc: "🍎 Fruit Avg Price High→Low", sort_veg_asc: "🥬 Veg Avg Price Low→High", sort_veg_desc: "🥬 Veg Avg Price High→Low", loading: "📍 Loading store data...", footer_text: "Reference local prices | Color indicator: ●Low ●Medium ●High", fruit_title: "Fruit Prices", veg_title: "Vegetable Prices", no_fruit: "No fruit", no_veg: "No vegetables", avg_fruit: "Fruit avg", avg_veg: "Veg avg", no_fruit_data: "No fruit", no_veg_data: "No veg", distance_km: "km", empty_shop: "No stores found.", reward_btn: "Reward", search_placeholder: "Search...", hot_tags: "🔥 Hot Items:", filter_active: "Filter by: ", clear_filter: "Clear", sort_price_low: "💰 Price Low to High" },
+        ko: { app_name: "신선지도", subtitle: "주변 채소과일 · 가격 비교", location_not: "위치 미설정", locate_me: "내 위치", tab_all: "🍎 전체 매장", tab_fruit: "🍓 과일 중심", tab_veg: "🥬 채소 중심", sort_label: "정렬 기준", sort_distance: "📍 거리 가까운 순", sort_fruit_asc: "🍎 과일 평균가 낮은순", sort_fruit_desc: "🍎 과일 평균가 높은순", sort_veg_asc: "🥬 채소 평균가 낮은순", sort_veg_desc: "🥬 채소 평균가 높은순", loading: "📍 매장 데이터 로딩 중...", footer_text: "주변 실시간 가격 참고 | 색상 표시: ●낮음 ●보통 ●높음", fruit_title: "과일 가격", veg_title: "채소 가격", no_fruit: "과일 없음", no_veg: "채소 없음", avg_fruit: "과일 평균", avg_veg: "채소 평균", no_fruit_data: "과일 없음", no_veg_data: "채소 없음", distance_km: "km", empty_shop: "조건에 맞는 매장이 없습니다.", reward_btn: "후원", search_placeholder: "검색...", hot_tags: "🔥 인기 상품:", filter_active: "필터: ", clear_filter: "지우기", sort_price_low: "💰 가격 낮은순" }
+    };
+
+    let currentLang = "zh";
+    let currentProductFilter = "";
+    let currentTypeFilter = "all";
+    let currentSort = "distance";
+
+    function getAllUniqueProducts() {
+        const products = new Set();
+        STORES_BASE.forEach(shop => {
+            shop.fruits.forEach(f => products.add(f.name));
+            shop.vegetables.forEach(v => products.add(v.name));
+        });
+        return Array.from(products).sort();
+    }
+
+    const STORES_BASE = [
+        { id:1, type:"fruit", lat:31.2304, lng:121.4737, fruits:[{ name:"苹果", price:6.8, unit:"斤"},{ name:"香蕉", price:4.5, unit:"斤"},{ name:"草莓", price:18.0, unit:"斤"}], vegetables:[{ name:"西红柿", price:4.2, unit:"斤"},{ name:"黄瓜", price:3.5, unit:"斤"}] },
+        { id:2, type:"all", lat:31.2350, lng:121.4680, fruits:[{ name:"苹果", price:5.2, unit:"斤"},{ name:"香蕉", price:3.8, unit:"斤"},{ name:"橙子", price:6.5, unit:"斤"}], vegetables:[{ name:"西红柿", price:3.2, unit:"斤"},{ name:"黄瓜", price:2.8, unit:"斤"},{ name:"西兰花", price:5.5, unit:"斤"}] },
+        { id:3, type:"vegetable", lat:31.2422, lng:121.4805, fruits:[{ name:"苹果", price:8.9, unit:"斤"},{ name:"蓝莓", price:28.0, unit:"盒"}], vegetables:[{ name:"西红柿", price:6.5, unit:"斤"},{ name:"黄瓜", price:5.2, unit:"斤"},{ name:"菠菜", price:7.0, unit:"斤"},{ name:"生菜", price:4.8, unit:"斤"}] },
+        { id:4, type:"fruit", lat:31.2256, lng:121.4601, fruits:[{ name:"苹果", price:7.5, unit:"斤"},{ name:"香蕉", price:5.0, unit:"斤"},{ name:"车厘子", price:45.0, unit:"斤"},{ name:"芒果", price:12.0, unit:"斤"}], vegetables:[{ name:"西红柿", price:4.9, unit:"斤"}] },
+        { id:5, type:"vegetable", lat:31.2485, lng:121.4853, fruits:[{ name:"苹果", price:5.5, unit:"斤"}], vegetables:[{ name:"西红柿", price:2.9, unit:"斤"},{ name:"黄瓜", price:2.5, unit:"斤"},{ name:"土豆", price:1.8, unit:"斤"},{ name:"大白菜", price:1.2, unit:"斤"},{ name:"菠菜", price:3.2, unit:"斤"}] },
+        { id:6, type:"fruit", lat:31.2380, lng:121.4788, fruits:[{ name:"苹果", price:6.0, unit:"斤"},{ name:"香蕉", price:4.0, unit:"斤"},{ name:"葡萄", price:9.9, unit:"斤"},{ name:"西瓜", price:2.5, unit:"斤"}], vegetables:[{ name:"黄瓜", price:3.6, unit:"斤"}] }
+    ];
+
+    function getDistanceFromLatLon(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = deg2rad(lat2 - lat1);
+        const dLon = deg2rad(lon2 - lon1);
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+    function deg2rad(deg) { return deg * (Math.PI/180); }
+
+    let currentLocation = { lat: 31.2304, lng: 121.4737 };
+
+    function getAvgFruitPrice(shop) { if(!shop.fruits.length) return Infinity; return shop.fruits.reduce((acc,f)=>acc+f.price,0)/shop.fruits.length; }
+    function getAvgVegPrice(shop) { if(!shop.vegetables.length) return Infinity; return shop.vegetables.reduce((acc,v)=>acc+v.price,0)/shop.vegetables.length; }
+
+    function filterShopsByProduct(shops, productName) {
+        if (!productName) return shops;
+        return shops.filter(shop => {
+            const hasFruit = shop.fruits.some(f => f.name === productName);
+            const hasVeg = shop.vegetables.some(v => v.name === productName);
+            return hasFruit || hasVeg;
+        });
+    }
+
+    // 计算每个商品在所有店铺中的最低价 (用于🏆标记)
+    function computeGlobalMinPrices(shops) {
+        const minMap = new Map(); // key: 商品名, value: 最低价(CNY)
+        shops.forEach(shop => {
+            [...shop.fruits, ...shop.vegetables].forEach(item => {
+                const currentMin = minMap.get(item.name);
+                if (currentMin === undefined || item.price < currentMin) {
+                    minMap.set(item.name, item.price);
+                }
+            });
+        });
+        return minMap;
+    }
+
+    function getFinalSortedShops(shops, baseSort, productFilter) {
+        let filtered = [...shops];
+        if (productFilter) {
+            const shopsWithPrice = filtered.map(shop => {
+                let minPrice = Infinity;
+                const fruitMatch = shop.fruits.find(f => f.name === productFilter);
+                if (fruitMatch) minPrice = Math.min(minPrice, fruitMatch.price);
+                const vegMatch = shop.vegetables.find(v => v.name === productFilter);
+                if (vegMatch) minPrice = Math.min(minPrice, vegMatch.price);
+                return { ...shop, _filterPrice: minPrice };
+            });
+            return shopsWithPrice.sort((a,b) => {
+                if (a._filterPrice === Infinity && b._filterPrice === Infinity) return 0;
+                if (a._filterPrice === Infinity) return 1;
+                if (b._filterPrice === Infinity) return -1;
+                return a._filterPrice - b._filterPrice;
+            });
+        } else {
+            switch(baseSort) {
+                case "distance": return filtered.sort((a,b)=>a.distance-b.distance);
+                case "price_asc_fruit": return filtered.sort((a,b)=>getAvgFruitPrice(a)-getAvgFruitPrice(b));
+                case "price_desc_fruit": return filtered.sort((a,b)=>getAvgFruitPrice(b)-getAvgFruitPrice(a));
+                case "price_asc_veg": return filtered.sort((a,b)=>getAvgVegPrice(a)-getAvgVegPrice(b));
+                case "price_desc_veg": return filtered.sort((a,b)=>getAvgVegPrice(b)-getAvgVegPrice(a));
+                default: return filtered;
+            }
+        }
+    }
+
+    function updateShopsWithDistanceAndLang() {
+        return STORES_BASE.map(shop => ({ ...shop, distance: getDistanceFromLatLon(currentLocation.lat, currentLocation.lng, shop.lat, shop.lng), displayName: storeNames[shop.id]?.[currentLang] || shop.name }));
+    }
+
+    function getPriceLevel(price, allPricesArray) {
+        if(!allPricesArray.length) return "medium";
+        const avg = allPricesArray.reduce((a,b)=>a+b,0)/allPricesArray.length;
+        const stdDev = Math.sqrt(allPricesArray.map(x=>Math.pow(x-avg,2)).reduce((a,b)=>a+b,0)/allPricesArray.length);
+        if(price > avg + (stdDev*0.5)) return "high";
+        if(price < avg - (stdDev*0.5)) return "low";
+        return "medium";
+    }
+
+    function render(shops) {
+        const container = document.getElementById('shopContainer');
+        if(!shops.length) { container.innerHTML = `<div class="empty-state"><i class="fas fa-store-slash"></i> ${translations[currentLang].empty_shop}</div>`; return; }
+        
+        let allFruitPrices = [], allVegPrices = [];
+        shops.forEach(shop => { shop.fruits.forEach(f => allFruitPrices.push(f.price)); shop.vegetables.forEach(v => allVegPrices.push(v.price)); });
+        
+        // 计算全局最低价 (基于当前显示的店铺集合，保证🏆只出现在可见范围内)
+        const globalMinMap = computeGlobalMinPrices(shops);
+        
+        const currency = currencySymbols[currentLang];
+        const unitMap = unitMapping[currentLang];
+        
+        const cardsHtml = shops.map(shop => {
+            // 水果列表
+            const fruitItemsHtml = shop.fruits.map(fruit => {
+                const level = getPriceLevel(fruit.price, allFruitPrices);
+                let levelClass = "", iconHtml = "";
+                if(level === "high") { levelClass = "high-price"; iconHtml = '<i class="fas fa-arrow-up trend-icon"></i>'; }
+                else if(level === "low") { levelClass = "low-price"; iconHtml = '<i class="fas fa-arrow-down trend-icon"></i>'; }
+                else { levelClass = "medium-price"; iconHtml = '<i class="fas fa-minus trend-icon"></i>'; }
+                const convertedPrice = formatPrice(fruit.price, currentLang);
+                let displayUnit = fruit.unit === "斤" ? unitMap.jin : (fruit.unit === "盒" ? unitMap.box : fruit.unit);
+                const isGlobalBest = (globalMinMap.get(fruit.name) === fruit.price);
+                const bestBadgeHtml = isGlobalBest ? `<span class="best-price-badge"><i class="fas fa-trophy"></i> 最低价</span>` : '';
+                return `<div class="price-badge">
+                            <div class="item-name">${fruit.name}</div>
+                            <div class="price-value ${levelClass}">
+                                ${currency}${convertedPrice}<span class="price-unit">/${displayUnit}</span>${iconHtml}
+                                ${bestBadgeHtml}
+                            </div>
+                        </div>`;
+            }).join('');
+            
+            const vegItemsHtml = shop.vegetables.map(veg => {
+                const level = getPriceLevel(veg.price, allVegPrices);
+                let levelClass = "", iconHtml = "";
+                if(level === "high") { levelClass = "high-price"; iconHtml = '<i class="fas fa-arrow-up trend-icon"></i>'; }
+                else if(level === "low") { levelClass = "low-price"; iconHtml = '<i class="fas fa-arrow-down trend-icon"></i>'; }
+                else { levelClass = "medium-price"; iconHtml = '<i class="fas fa-minus trend-icon"></i>'; }
+                const convertedPrice = formatPrice(veg.price, currentLang);
+                let displayUnit = veg.unit === "斤" ? unitMap.jin : (veg.unit === "盒" ? unitMap.box : veg.unit);
+                const isGlobalBest = (globalMinMap.get(veg.name) === veg.price);
+                const bestBadgeHtml = isGlobalBest ? `<span class="best-price-badge"><i class="fas fa-trophy"></i> 最低价</span>` : '';
+                return `<div class="price-badge">
+                            <div class="item-name">${veg.name}</div>
+                            <div class="price-value ${levelClass}">
+                                ${currency}${convertedPrice}<span class="price-unit">/${displayUnit}</span>${iconHtml}
+                                ${bestBadgeHtml}
+                            </div>
+                        </div>`;
+            }).join('');
+            
+            const avgFruitRaw = getAvgFruitPrice(shop), avgVegRaw = getAvgVegPrice(shop);
+            const avgFruitConverted = avgFruitRaw !== Infinity ? formatPrice(avgFruitRaw, currentLang) : null;
+            const avgVegConverted = avgVegRaw !== Infinity ? formatPrice(avgVegRaw, currentLang) : null;
+            const fruitAvgDesc = avgFruitRaw !== Infinity ? `${translations[currentLang].avg_fruit} ${currency}${avgFruitConverted}` : translations[currentLang].no_fruit_data;
+            const vegAvgDesc = avgVegRaw !== Infinity ? `${translations[currentLang].avg_veg} ${currency}${avgVegConverted}` : translations[currentLang].no_veg_data;
+            const fruitAvgSuffix = avgFruitRaw !== Infinity ? `(${translations[currentLang].avg_fruit} ${currency}${avgFruitConverted})` : '';
+            const vegAvgSuffix = avgVegRaw !== Infinity ? `(${translations[currentLang].avg_veg} ${currency}${avgVegConverted})` : '';
+            
+            return `<div class="shop-card"><div class="card-header"><div class="shop-name"><i class="fas fa-store"></i> ${escapeHtml(shop.displayName)}</div><div class="distance"><i class="fas fa-location-dot"></i> ${shop.distance.toFixed(1)} ${translations[currentLang].distance_km}</div></div><div class="price-section"><div class="category-title"><i class="fas fa-apple-alt"></i> ${translations[currentLang].fruit_title} ${fruitAvgSuffix}</div><div class="price-items">${fruitItemsHtml.length ? fruitItemsHtml : `<div class="price-badge">${translations[currentLang].no_fruit}</div>`}</div><div class="category-title" style="margin-top:8px;"><i class="fas fa-carrot"></i> ${translations[currentLang].veg_title} ${vegAvgSuffix}</div><div class="price-items">${vegItemsHtml.length ? vegItemsHtml : `<div class="price-badge">${translations[currentLang].no_veg}</div>`}</div><div style="font-size:0.7rem; margin-top:8px; color:#909e82;"><i class="fas fa-chart-simple"></i> ${fruitAvgDesc} · ${vegAvgDesc}</div></div></div>`;
+        }).join('');
+        container.innerHTML = cardsHtml;
+    }
+
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; }); }
+
+    function refreshDisplay() {
+        let shopsWithDist = updateShopsWithDistanceAndLang();
+        let typeFiltered = filterByType(shopsWithDist, currentTypeFilter);
+        let productFiltered = filterShopsByProduct(typeFiltered, currentProductFilter);
+        let finalSorted = getFinalSortedShops(productFiltered, currentSort, currentProductFilter);
+        render(finalSorted);
+        updateFilterUI();
+    }
+
+    function filterByType(shops, typeFilter) { if(typeFilter === "all") return shops; return shops.filter(shop => shop.type === typeFilter); }
+
+    function updateFilterUI() {
+        const infoDiv = document.getElementById('activeFilterInfo');
+        if (currentProductFilter) {
+            infoDiv.innerHTML = `<div class="active-filter-badge"><i class="fas fa-filter"></i> ${translations[currentLang].filter_active} <strong>${currentProductFilter}</strong> <button id="clearProductFilterBtn" class="clear-filter-btn"><i class="fas fa-times"></i> ${translations[currentLang].clear_filter}</button></div>`;
+            const clearBtn = document.getElementById('clearProductFilterBtn');
+            if (clearBtn) clearBtn.onclick = () => { currentProductFilter = ""; document.getElementById('productSearch').value = ""; refreshDisplay(); };
+        } else {
+            infoDiv.innerHTML = "";
+        }
+    }
+
+    function initTags() {
+        const products = getAllUniqueProducts();
+        const container = document.getElementById('tagCloud');
+        if (!container) return;
+        container.innerHTML = products.map(p => `<button class="product-tag" data-product="${p}">${p}</button>`).join('');
+        document.querySelectorAll('.product-tag').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const product = btn.getAttribute('data-product');
+                currentProductFilter = product;
+                document.getElementById('productSearch').value = product;
+                refreshDisplay();
+            });
+        });
+    }
+
+    function updateUILanguage() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (translations[currentLang][key]) el.innerText = translations[currentLang][key];
+        });
+        const sortSelect = document.getElementById('sortSelect');
+        if (sortSelect) {
+            for (let i = 0; i < sortSelect.options.length; i++) {
+                const opt = sortSelect.options[i];
+                const key = opt.getAttribute('data-i18n');
+                if (key && translations[currentLang][key]) opt.text = translations[currentLang][key];
+            }
+        }
+        document.querySelectorAll('.lang-btn').forEach(btn => { if (btn.getAttribute('data-lang') === currentLang) btn.classList.add('active'); else btn.classList.remove('active'); });
+        refreshDisplay();
+        initTags();
+    }
+
+    function getUserLocation() {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(pos => { currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; document.getElementById('userLocation').innerHTML = `📍 ${currentLocation.lat.toFixed(3)}, ${currentLocation.lng.toFixed(3)}`; refreshDisplay(); }, () => { document.getElementById('userLocation').innerHTML = translations[currentLang].location_not; refreshDisplay(); });
+        } else { document.getElementById('userLocation').innerHTML = "不支持定位"; refreshDisplay(); }
+    }
+
+    const modal = document.getElementById('rewardModal');
+    const rewardImage = document.getElementById('rewardImage');
+    const rewardBtn = document.getElementById('rewardBtn');
+    function showRewardModal() { rewardImage.src = "打赏100韩元.png"; modal.classList.add('active'); rewardImage.onerror = () => { rewardImage.alt = "图片加载失败"; }; }
+    function closeRewardModal() { modal.classList.remove('active'); }
+    rewardBtn.addEventListener('click', (e) => { e.stopPropagation(); showRewardModal(); });
+    modal.addEventListener('click', () => { closeRewardModal(); });
+
+    function init() {
+        refreshDisplay();
+        initTags();
+        document.getElementById('locateBtn').addEventListener('click', getUserLocation);
+        document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentTypeFilter = btn.getAttribute('data-type'); refreshDisplay(); }); });
+        document.getElementById('sortSelect').addEventListener('change', (e) => { currentSort = e.target.value; refreshDisplay(); });
+        document.querySelectorAll('.lang-btn').forEach(btn => { btn.addEventListener('click', () => { currentLang = btn.getAttribute('data-lang'); updateUILanguage(); }); });
+        const searchInput = document.getElementById('productSearch');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            currentProductFilter = val;
+            refreshDisplay();
+            if (clearSearchBtn) clearSearchBtn.style.display = val ? "inline-block" : "none";
+        });
+        if (clearSearchBtn) clearSearchBtn.addEventListener('click', () => { searchInput.value = ""; currentProductFilter = ""; refreshDisplay(); clearSearchBtn.style.display = "none"; });
+        updateUILanguage();
+    }
+    init();
+</script>
+</body>
+</html>
